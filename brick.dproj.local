@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2013/04/27 13:41:35.006.pas,C:\Users\Administrator\Documents\RAD Studio\Projects\Unit1.pas=C:\Users\Administrator\Documents\RAD Studio\Projects\brickgame.pas</Transaction>
+    <Transaction>2013/04/27 13:41:35.006.dfm,C:\Users\Administrator\Documents\RAD Studio\Projects\Unit1.dfm=C:\Users\Administrator\Documents\RAD Studio\Projects\brickgame.dfm</Transaction>
+    <Transaction>2013/04/27 15:00:06.031.dproj,C:\Users\Administrator\Documents\RAD Studio\Projects\Project1.dproj=C:\Users\Administrator\Documents\RAD Studio\Projects\brick.dproj</Transaction>
+    <Transaction>2013/04/27 15:26:10.821.dproj,C:\Users\Administrator\Documents\RAD Studio\Projects\brick.dproj=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\brick.dproj</Transaction>
+    <Transaction>2013/04/28 11:23:48.085.PAS,c:\program files\embarcadero\rad studio\7.0\ObjRepos\EN\DelphiWin32\OKCNHLP1.PAS=</Transaction>
+    <Transaction>2013/04/28 11:23:48.085.dfm,c:\program files\embarcadero\rad studio\7.0\ObjRepos\EN\DelphiWin32\OKCNHLP1.dfm=</Transaction>
+    <Transaction>2013/04/28 13:59:22.255.pas,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\Unit1.pas=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\highScore.pas</Transaction>
+    <Transaction>2013/04/28 13:59:22.255.dfm,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\Unit1.dfm=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\highScore.dfm</Transaction>
+    <Transaction>2013/04/28 14:33:55.300.pas,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\highScore.pas=</Transaction>
+    <Transaction>2013/04/28 14:33:55.300.dfm,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\highScore.dfm=</Transaction>
+    <Transaction>2013/04/28 14:38:51.761.pas,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\Unit1.pas=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\hsframeA.pas</Transaction>
+    <Transaction>2013/04/28 14:38:51.761.dfm,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\Unit1.dfm=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\hsframeA.dfm</Transaction>
+    <Transaction>2013/04/28 14:46:55.228.pas,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\hsframeA.pas=</Transaction>
+    <Transaction>2013/04/28 14:46:55.228.dfm,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\hsframeA.dfm=</Transaction>
+    <Transaction>2013/04/28 14:47:47.044.pas,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\Unit1.pas=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\highScore.pas</Transaction>
+    <Transaction>2013/04/28 14:47:47.044.dfm,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\Unit1.dfm=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\highScore.dfm</Transaction>
+    <Transaction>2013/04/28 14:51:27.007.pas,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\highScore.pas=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\hsframeA.pas</Transaction>
+    <Transaction>2013/04/28 14:51:27.007.dfm,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\highScore.dfm=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\hsframeA.dfm</Transaction>
+    <Transaction>2013/05/02 13:44:17.927.pas,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\Unit1.pas=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\InputName.pas</Transaction>
+    <Transaction>2013/05/02 13:44:17.934.dfm,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\Unit1.dfm=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\InputName.dfm</Transaction>
+    <Transaction>2013/05/02 14:32:19.282.pas,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\Unit1.pas=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\winForm.pas</Transaction>
+    <Transaction>2013/05/02 14:32:19.282.dfm,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\Unit1.dfm=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\winForm.dfm</Transaction>
+    <Transaction>2013/05/06 13:50:36.887.pas,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\Unit1.pas=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\dialog.pas</Transaction>
+    <Transaction>2013/05/06 13:50:36.887.dfm,C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\Unit1.dfm=C:\Users\Administrator\Documents\RAD Studio\Projects\brickGame\dialog.dfm</Transaction>
+  </Transactions>
+</BorlandProject>
