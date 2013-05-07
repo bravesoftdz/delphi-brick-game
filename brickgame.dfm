@@ -43,18 +43,6 @@ object MainForm: TMainForm
     Height = 13
     Caption = #21097#20313':'
   end
-  object SpeedButton1: TSpeedButton
-    Left = 264
-    Top = 152
-    Width = 23
-    Height = 22
-  end
-  object ButtonBackground: TImage
-    Left = 224
-    Top = 112
-    Width = 105
-    Height = 105
-  end
   object gamePanel: TPanel
     Left = 128
     Top = 0

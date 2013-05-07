@@ -15,8 +15,23 @@ type
   GameStatus = (init, inGame, pause, dead, load, win, dbError, allOver,
     unkonwn);
 
+  // 砖块基类
+  GameButton = class(TSpeedButton)
+  public
+    // x速度和y速度
+    speedx, speedy: integer;
+    // 检查碰撞
+    procedure checkContact(var X: integer; var Y: integer);
+    // 边框碰撞
+    procedure checkPenalContact(var tempLeft: integer; var tempTop: integer);
+    // 板子碰撞动作
+    procedure BorderContact(var tempLeft: integer; var tempTop: integer);
+   // procedure contacted;
+    procedure move;
+  end;
+
   // 砖块
-  BrickButton = class(TSpeedButton)
+  BrickButton = class(GameButton)
   public
     heart, reward: integer; // 血量，奖品
     backGround: TImage;
@@ -24,19 +39,21 @@ type
     procedure setColor;
     constructor create(AOwner: Tcomponent); override;
     destructor destroy; override;
+    // 创建奖品
+    procedure createReward(rwdType: integer);
   end;
 
   // 奖品
-  RewardButton = class(TSpeedButton)
+  RewardButton = class(GameButton)
   public
     rewardtype: integer;
+    procedure BorderContact(var tempLeft: integer; var tempTop: integer);
     constructor create(AOwner: Tcomponent); override;
     destructor destroy; override;
-    procedure move;
   end;
 
   // 板子
-  BoardButton = class(TSpeedButton)
+  BoardButton = class(GameButton)
   public
     boardSpeed: integer;
     canControl: boolean;
@@ -47,16 +64,14 @@ type
   end;
 
   // 球
-  ballButton = class(TSpeedButton)
+  ballButton = class(GameButton)
   public
-    // x速度和y速度
-    ballSpeedx, ballSpeedy: integer;
+
     constructor create(AOwner: Tcomponent); override;
     // 检查碰撞
     procedure checkContact(var X: integer; var Y: integer);
-    // 移动
-    procedure move;
     destructor destroy; override;
+    procedure BorderContact(var tempLeft: integer; var tempTop: integer);
   end;
 
   TMainForm = class(TForm)
@@ -79,8 +94,6 @@ type
     // 剩余砖块文字
     brickleftlabel: TLabel;
     Button1: TButton;
-    SpeedButton1: TSpeedButton;
-    ButtonBackground: TImage;
     SkinData1: TSkinData;
     // 鼠标事件：游戏面板中移动（控制挡板移动状态）
     procedure gamePanelMouseMove(Sender: TObject; Shift: TShiftState;
@@ -122,6 +135,7 @@ type
     procedure Button1Click(Sender: TObject);
     procedure rePaintBricks;
     procedure updateBoardMoveStatus;
+    procedure updateRewards;
 
   private
     { Private declarations }
@@ -157,11 +171,25 @@ var
   ballCount: integer;
   // 奖品数量
   rewardCount: integer;
+  // 鼠标在当前gamepenal的位置
   curMousePos: TPoint;
 
 implementation
 
 {$R *.dfm}
+
+procedure TMainForm.updateRewards;
+var
+  rwd: RewardButton;
+  i: integer;
+begin
+  for i := 0 to ComponentCount - 1 do
+    if components[i] is RewardButton then
+    begin
+      rwd := RewardButton(components[i]);
+      rwd.move;
+    end;
+end;
 
 procedure TMainForm.updateBoardMoveStatus;
 begin
@@ -175,9 +203,170 @@ begin
     board.bms := BoardMoveStatus.stop
 end;
 
-procedure RewardButton.move;
+procedure GameButton.checkPenalContact(var tempLeft: integer;
+  var tempTop: integer);
+begin
+  if tempLeft < board.Left + board.width then
+    if board.Top < tempTop + height then
+      if board.Top > tempTop - board.height then
+      begin
+        BorderContact(tempLeft, tempTop);
+      end;
+  if tempTop < 0 then
+  begin
+    tempTop := 0;
+    speedy := -speedy;
+  end;
+  if parent <> nil then
+    if tempTop + height > parent.height then
+    begin
+      tempTop := parent.height - height;
+      speedy := -speedy;
+    end;
+  if parent <> nil then
+    if tempLeft + width > parent.width then
+    begin
+      tempLeft := parent.width - width;
+      speedx := -speedx;
+    end;
+  Top := tempTop;
+  Left := tempLeft;
+  if tempLeft + width < 0 then
+  begin
+    free;
+  end;
+end;
+
+procedure GameButton.move;
+var
+  tempTop, tempLeft: integer;
+begin
+  tempTop := Top + speedy;
+  tempLeft := Left + speedx;
+  checkContact(tempLeft, tempTop);
+  checkPenalContact(tempLeft, tempTop);
+
+end;
+
+procedure GameButton.BorderContact(var tempLeft, tempTop: integer);
 begin ;
 end;
+
+procedure GameButton.checkContact(var X: integer; var Y: integer);
+var
+  i, xOff, yOff, xNow, yNow: integer;
+  af: double;
+  br: BrickButton;
+  isContact: boolean;
+begin
+  if X <> Left then
+    af := (Y - Top) / (X - Left);
+  if Left < X then
+  begin
+    for xNow := Left to X do
+    begin
+      yNow := Y + round((xNow - X) * af);
+      for i := brickgame.MainForm.ComponentCount - 1 downto 0 do
+      begin
+        br := nil;
+        if (brickgame.MainForm.components[i] is BrickButton) then
+        begin
+          isContact := false;
+          br := BrickButton(brickgame.MainForm.components[i]);
+          isContact := brickgame.MainForm.isRecInteracted(xNow, yNow, width,
+            height, br.Left, br.Top, br.width, br.height);
+          if isContact then
+          begin
+            X := xNow;
+            Y := yNow;
+            if speedx < 0 then
+              xOff := br.Left + br.width - X
+            else
+              xOff := X - br.Left;
+            if br <> nil then
+            begin
+              if speedy < 0 then
+                yOff := br.Top + br.height - Y
+              else
+                yOff := Y - br.Top;
+              if speedy = 0 then
+              begin
+                speedx := -speedx;
+                X := br.Left - br.width;
+                Y := yNow + round((X - xNow) * af);
+              end
+              else if xOff / abs(speedx) > yOff / abs(speedy) then
+              begin
+                speedy := -speedy;
+              end
+              else
+              begin
+                speedx := -speedx;
+                X := br.Left - br.width;
+                Y := yNow + round((X - xNow) * af);
+              end;
+              br.contacted;
+              exit;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end
+  else if Left > X then
+  begin
+    for xNow := Left downto X do
+    begin
+      yNow := Y + round((xNow - X) * af);
+      for i := brickgame.MainForm.ComponentCount - 1 downto 0 do
+      begin
+        br := nil;
+        if (brickgame.MainForm.components[i] is BrickButton) then
+        begin
+          isContact := false;
+          br := BrickButton(brickgame.MainForm.components[i]);
+          isContact := brickgame.MainForm.isRecInteracted(xNow, yNow, width,
+            height, br.Left, br.Top, br.width, br.height);
+          if isContact then
+          begin
+            X := xNow;
+            Y := yNow;
+            if speedx < 0 then
+              xOff := br.Left + br.width - X
+            else
+              xOff := X - br.Left;
+            if speedy < 0 then
+              yOff := br.Top + br.height - Y
+            else
+              yOff := Y - br.Top;
+            if br <> nil then
+            begin
+              if speedy = 0 then
+              begin
+                speedx := -speedx;
+                X := br.Left + br.width;
+                Y := yNow + round((X - xNow) * af);
+              end
+              else if xOff / abs(speedx) > yOff / abs(speedy) then
+              begin
+                speedy := -speedy;
+              end
+              else
+              begin
+                speedx := -speedx;
+                X := br.Left + br.width;
+                Y := yNow + round((X - xNow) * af);
+              end;
+              br.contacted;
+              exit;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+end;
+
 
 procedure BrickButton.contacted;
 begin
@@ -185,7 +374,26 @@ begin
   score := score + 1;
   setColor;
   if heart = 0 then
+  begin
+    createReward(reward);
     free;
+  end;
+end;
+
+// 创建奖品
+procedure BrickButton.createReward(rwdType: integer);
+var
+  reward: RewardButton;
+begin
+  reward := RewardButton.create(self.parent.parent);
+  reward.parent := self.parent;
+  reward.rewardtype := rwdType;
+  reward.speedx := -Random(3);
+  reward.speedy := Random(10);
+  reward.width := 10;
+  reward.height := 10;
+  reward.Top := Top + height div 2 - reward.height div 2;
+  reward.Left := Left - reward.width;
 end;
 
 procedure TMainForm.rePaintBricks;
@@ -195,9 +403,9 @@ var
 begin
   for i := 0 to ComponentCount - 1 do
   begin
-    if Components[i] is BrickButton then
+    if components[i] is BrickButton then
     begin
-      br := BrickButton(Components[i]);
+      br := BrickButton(components[i]);
       br.setColor;
     end;
   end;
@@ -262,6 +470,7 @@ begin
   inherited destroy;
 end;
 
+
 constructor BoardButton.create(AOwner: Tcomponent);
 begin
   inherited create(AOwner);
@@ -273,6 +482,10 @@ end;
 destructor BoardButton.destroy;
 begin
   inherited destroy;
+end;
+
+procedure RewardButton.BorderContact(var tempLeft, tempTop: integer);
+begin ;
 end;
 
 constructor RewardButton.create(AOwner: Tcomponent);
@@ -302,52 +515,18 @@ begin
   inherited destroy;
 end;
 
-procedure ballButton.move;
-var
-  tempTop, tempLeft: integer;
+procedure ballButton.BorderContact(var tempLeft: integer; var tempTop: integer);
 begin
-  tempTop := Top + ballSpeedy;
-  tempLeft := Left + ballSpeedx;
-  checkContact(tempLeft, tempTop);
-  if tempLeft < board.Left + board.width then
-    if board.Top < tempTop + height then
-      if board.Top > tempTop - board.height then
-      begin
-        tempLeft := board.Left + board.width;
-        ballSpeedx := -ballSpeedx;
-        case board.bms of
-          BoardMoveStatus.up:
-            ballSpeedy := ballSpeedy - 1;
-          BoardMoveStatus.down:
-            ballSpeedy := ballSpeedy + 1;
-        end;
-      end;
-  if tempTop < 0 then
-  begin
-    tempTop := 0;
-    ballSpeedy := -ballSpeedy;
-  end;
-  if parent <> nil then
-    if tempTop + height > parent.height then
-    begin
-      tempTop := parent.height - height;
-      ballSpeedy := -ballSpeedy;
-    end;
-  if parent <> nil then
-    if tempLeft + width > parent.width then
-    begin
-      tempLeft := parent.width - width;
-      ballSpeedx := -ballSpeedx;
-    end;
-  Top := tempTop;
-  Left := tempLeft;
-  if tempLeft + width < 0 then
-  begin
-    free;
+  tempLeft := board.Left + board.width;
+  speedx := -speedx;
+  case board.bms of
+    BoardMoveStatus.up:
+      speedy := speedy - 1;
+    BoardMoveStatus.down:
+      speedy := speedy + 1;
   end;
 end;
 
-// 现在暂时不检查球的碰撞
 procedure ballButton.checkContact(var X: integer; var Y: integer);
 var
   i, xOff, yOff, xNow, yNow: integer;
@@ -365,39 +544,39 @@ begin
       for i := brickgame.MainForm.ComponentCount - 1 downto 0 do
       begin
         br := nil;
-        if (brickgame.MainForm.Components[i] is BrickButton) then
+        if (brickgame.MainForm.components[i] is BrickButton) then
         begin
           isContact := false;
-          br := BrickButton(brickgame.MainForm.Components[i]);
+          br := BrickButton(brickgame.MainForm.components[i]);
           isContact := brickgame.MainForm.isRecInteracted(xNow, yNow, width,
             height, br.Left, br.Top, br.width, br.height);
           if isContact then
           begin
             X := xNow;
             Y := yNow;
-            if ballSpeedx < 0 then
+            if speedx < 0 then
               xOff := br.Left + br.width - X
             else
               xOff := X - br.Left;
             if br <> nil then
             begin
-              if ballSpeedy < 0 then
+              if speedy < 0 then
                 yOff := br.Top + br.height - Y
               else
                 yOff := Y - br.Top;
-              if ballSpeedy = 0 then
+              if speedy = 0 then
               begin
-                ballSpeedx := -ballSpeedx;
+                speedx := -speedx;
                 X := br.Left - br.width;
                 Y := yNow + round((X - xNow) * af);
               end
-              else if xOff / abs(ballSpeedx) > yOff / abs(ballSpeedy) then
+              else if xOff / abs(speedx) > yOff / abs(speedy) then
               begin
-                ballSpeedy := -ballSpeedy;
+                speedy := -speedy;
               end
               else
               begin
-                ballSpeedx := -ballSpeedx;
+                speedx := -speedx;
                 X := br.Left - br.width;
                 Y := yNow + round((X - xNow) * af);
               end;
@@ -417,39 +596,39 @@ begin
       for i := brickgame.MainForm.ComponentCount - 1 downto 0 do
       begin
         br := nil;
-        if (brickgame.MainForm.Components[i] is BrickButton) then
+        if (brickgame.MainForm.components[i] is BrickButton) then
         begin
           isContact := false;
-          br := BrickButton(brickgame.MainForm.Components[i]);
+          br := BrickButton(brickgame.MainForm.components[i]);
           isContact := brickgame.MainForm.isRecInteracted(xNow, yNow, width,
             height, br.Left, br.Top, br.width, br.height);
           if isContact then
           begin
             X := xNow;
             Y := yNow;
-            if ballSpeedx < 0 then
+            if speedx < 0 then
               xOff := br.Left + br.width - X
             else
               xOff := X - br.Left;
-            if ballSpeedy < 0 then
+            if speedy < 0 then
               yOff := br.Top + br.height - Y
             else
               yOff := Y - br.Top;
             if br <> nil then
             begin
-              if ballSpeedy = 0 then
+              if speedy = 0 then
               begin
-                ballSpeedx := -ballSpeedx;
+                speedx := -speedx;
                 X := br.Left + br.width;
                 Y := yNow + round((X - xNow) * af);
               end
-              else if xOff / abs(ballSpeedx) > yOff / abs(ballSpeedy) then
+              else if xOff / abs(speedx) > yOff / abs(speedy) then
               begin
-                ballSpeedy := -ballSpeedy;
+                speedy := -speedy;
               end
               else
               begin
-                ballSpeedx := -ballSpeedx;
+                speedx := -speedx;
                 X := br.Left + br.width;
                 Y := yNow + round((X - xNow) * af);
               end;
@@ -471,8 +650,8 @@ begin
   newBall.parent := gamePanel;
   newBall.Top := 50;
   newBall.Left := 300;
-  newBall.ballSpeedx := 5;
-  newBall.ballSpeedy := 1;
+  newBall.speedx := 5;
+  newBall.speedy := 1;
 end;
 
 procedure TMainForm.ballsmove;
@@ -482,9 +661,9 @@ var
 begin
   for i := ComponentCount - 1 downto 0 do
   begin
-    if Components[i] is ballButton then
+    if components[i] is ballButton then
     begin
-      ball := ballButton(Components[i]);
+      ball := ballButton(components[i]);
       ball.move;
     end;
   end;
@@ -521,10 +700,10 @@ begin
     0:
       begin
         for i := ComponentCount - 1 downto 0 do
-          if (Components[i] is BrickButton) or (Components[i] is ballButton)
+          if (components[i] is BrickButton) or (components[i] is ballButton)
             then
           begin
-            Components[i].free;
+            components[i].free;
           end;
         subStatus := subStatus + 1;
       end;
@@ -701,17 +880,17 @@ begin
   stageName := intToStr(stageCount);
   for i := ComponentCount - 1 downto 0 do
   begin
-    if (Components[i] is BrickButton) or (Components[i] is ballButton) or
-      (Components[i] is BoardButton) then
-      Components[i].free;
+    if (components[i] is BrickButton) or (components[i] is ballButton) or
+      (components[i] is BoardButton) then
+      components[i].free;
   end;
   board := BoardButton.create(self);
   ball := ballButton.create(self);
   ball.parent := gamePanel;
   ball.Top := 50;
   ball.Left := 300;
-  ball.ballSpeedx := 5;
-  ball.ballSpeedy := 1;
+  ball.speedx := 5;
+  ball.speedy := 1;
   board.parent := gamePanel;
   board.Left := 1;
   board.boardSpeed := 5;
@@ -786,6 +965,7 @@ begin
         updateBoardMoveStatus;
         board.moveBoard;
         ballsmove;
+        updateRewards;
         drawScore;
         checkWin;
         checkDead;
