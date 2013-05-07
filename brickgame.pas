@@ -21,13 +21,15 @@ type
     // x速度和y速度
     speedx, speedy: integer;
     // 检查碰撞
-    procedure checkContact(var X: integer; var Y: integer);
+    procedure checkContact(var X: integer; var Y: integer); virtual;
     // 边框碰撞
     procedure checkPenalContact(var tempLeft: integer; var tempTop: integer);
+      virtual;
     // 板子碰撞动作
     procedure BorderContact(var tempLeft: integer; var tempTop: integer);
+      virtual;
     // procedure contacted;
-    procedure move;
+    procedure move; virtual;
   end;
 
   // 砖块
@@ -49,6 +51,7 @@ type
     rewardtype: integer;
     procedure paintColor;
     procedure BorderContact(var tempLeft: integer; var tempTop: integer);
+      override;
     constructor create(AOwner: Tcomponent); override;
     destructor destroy; override;
   end;
@@ -70,10 +73,11 @@ type
 
     constructor create(AOwner: Tcomponent); override;
     // 检查碰撞
-    procedure checkContact(var X: integer; var Y: integer);
+    procedure checkContact(var X: integer; var Y: integer); override;
     destructor destroy; override;
     procedure BorderContact(var tempLeft: integer; var tempTop: integer);
-    procedure move;
+      override;
+    procedure move; override;
   end;
 
   TMainForm = class(TForm)
@@ -363,7 +367,7 @@ begin
   score := score + 1;
   if heart = 0 then
   begin
-    //createReward(reward);
+    // createReward(reward);
     free;
   end;
 end;
