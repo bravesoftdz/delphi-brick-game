@@ -26,7 +26,7 @@ type
     procedure checkPenalContact(var tempLeft: integer; var tempTop: integer);
     // 板子碰撞动作
     procedure BorderContact(var tempLeft: integer; var tempTop: integer);
-   // procedure contacted;
+    // procedure contacted;
     procedure move;
   end;
 
@@ -36,7 +36,7 @@ type
     heart, reward: integer; // 血量，奖品
     backGround: TImage;
     procedure contacted;
-    procedure setColor;
+    procedure paintColor;
     constructor create(AOwner: Tcomponent); override;
     destructor destroy; override;
     // 创建奖品
@@ -47,6 +47,7 @@ type
   RewardButton = class(GameButton)
   public
     rewardtype: integer;
+    procedure paintColor;
     procedure BorderContact(var tempLeft: integer; var tempTop: integer);
     constructor create(AOwner: Tcomponent); override;
     destructor destroy; override;
@@ -72,6 +73,7 @@ type
     procedure checkContact(var X: integer; var Y: integer);
     destructor destroy; override;
     procedure BorderContact(var tempLeft: integer; var tempTop: integer);
+    procedure move;
   end;
 
   TMainForm = class(TForm)
@@ -136,6 +138,7 @@ type
     procedure rePaintBricks;
     procedure updateBoardMoveStatus;
     procedure updateRewards;
+    procedure repaintRewards;
 
   private
     { Private declarations }
@@ -178,19 +181,6 @@ implementation
 
 {$R *.dfm}
 
-procedure TMainForm.updateRewards;
-var
-  rwd: RewardButton;
-  i: integer;
-begin
-  for i := 0 to ComponentCount - 1 do
-    if components[i] is RewardButton then
-    begin
-      rwd := RewardButton(components[i]);
-      rwd.move;
-    end;
-end;
-
 procedure TMainForm.updateBoardMoveStatus;
 begin
   if board = nil then
@@ -210,7 +200,7 @@ begin
     if board.Top < tempTop + height then
       if board.Top > tempTop - board.height then
       begin
-        BorderContact(tempLeft, tempTop);
+        self.BorderContact(tempLeft, tempTop);
       end;
   if tempTop < 0 then
   begin
@@ -233,7 +223,7 @@ begin
   Left := tempLeft;
   if tempLeft + width < 0 then
   begin
-    free;
+    self.free;
   end;
 end;
 
@@ -367,15 +357,13 @@ begin
   end;
 end;
 
-
 procedure BrickButton.contacted;
 begin
   heart := heart - 1;
   score := score + 1;
-  setColor;
   if heart = 0 then
   begin
-    createReward(reward);
+    //createReward(reward);
     free;
   end;
 end;
@@ -406,7 +394,22 @@ begin
     if components[i] is BrickButton then
     begin
       br := BrickButton(components[i]);
-      br.setColor;
+      br.paintColor;
+    end;
+  end;
+end;
+
+procedure TMainForm.repaintRewards;
+var
+  i: integer;
+  rb: RewardButton;
+begin
+  for i := 0 to ComponentCount - 1 do
+  begin
+    if components[i] is RewardButton then
+    begin
+      rb := RewardButton(components[i]);
+      rb.paintColor; ;
     end;
   end;
 end;
@@ -425,7 +428,7 @@ begin
   brick.reward := rwd;
 end;
 
-procedure BrickButton.setColor;
+procedure BrickButton.paintColor;
 var
   pic: TRect;
 begin
@@ -434,6 +437,38 @@ begin
   pic.Top := 1;
   pic.Bottom := height - 1;
   case heart of
+    1:
+      begin
+        canvas.Brush.color := clred;
+        canvas.FillRect(pic);
+      end;
+    2:
+      begin
+        canvas.Brush.color := clblue;
+        canvas.FillRect(pic);
+      end;
+    3:
+      begin
+        canvas.Brush.color := clyellow;
+        canvas.FillRect(pic);
+      end;
+    4:
+      begin
+        canvas.Brush.color := clAqua;
+        canvas.FillRect(pic);
+      end;
+  end;
+end;
+
+procedure RewardButton.paintColor;
+var
+  pic: TRect;
+begin
+  pic.Left := 1;
+  pic.right := width - 1;
+  pic.Top := 1;
+  pic.Bottom := height - 1;
+  case rewardtype of
     1:
       begin
         canvas.Brush.color := clred;
@@ -469,7 +504,6 @@ begin
   brickgame.brickLeft := brickgame.brickLeft - 1;
   inherited destroy;
 end;
-
 
 constructor BoardButton.create(AOwner: Tcomponent);
 begin
@@ -513,6 +547,16 @@ destructor ballButton.destroy;
 begin
   brickgame.ballCount := brickgame.ballCount - 1;
   inherited destroy;
+end;
+
+procedure ballButton.move;
+var
+  tempTop, tempLeft: integer;
+begin
+  tempTop := Top + speedy;
+  tempLeft := Left + speedx;
+  checkContact(tempLeft, tempTop);
+  checkPenalContact(tempLeft, tempTop);
 end;
 
 procedure ballButton.BorderContact(var tempLeft: integer; var tempTop: integer);
@@ -667,6 +711,19 @@ begin
       ball.move;
     end;
   end;
+end;
+
+procedure TMainForm.updateRewards;
+var
+  rwd: RewardButton;
+  i: integer;
+begin
+  for i := ComponentCount - 1 downto 0 do
+    if components[i] is RewardButton then
+    begin
+      rwd := RewardButton(components[i]);
+      rwd.move;
+    end;
 end;
 
 function TMainForm.checkDead: boolean;
@@ -947,6 +1004,7 @@ end;
 
 procedure TMainForm.frameControlTimer(Sender: TObject);
 begin
+  paint;
   if timerpause then
     exit;
   case gs of
@@ -961,14 +1019,17 @@ begin
       end;
     GameStatus.inGame:
       begin
+
         rePaintBricks;
         updateBoardMoveStatus;
         board.moveBoard;
         ballsmove;
         updateRewards;
+        repaintRewards;
         drawScore;
         checkWin;
         checkDead;
+
       end;
     GameStatus.dead:
       begin
