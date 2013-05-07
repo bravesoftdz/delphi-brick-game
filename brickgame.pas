@@ -8,6 +8,13 @@ uses
   WinSkinData, Buttons;
 
 type
+
+  // 挡板运动状态
+  BoardMoveStatus = (up, down, stop);
+  // 游戏状态
+  GameStatus = (init, inGame, pause, dead, load, win, dbError, allOver,
+    unkonwn);
+
   // 砖块
   BrickButton = class(TSpeedButton)
   public
@@ -15,6 +22,26 @@ type
     backGround: TImage;
     procedure contacted;
     procedure setColor;
+    constructor create(AOwner: Tcomponent); override;
+    destructor destroy; override;
+  end;
+
+  // 奖品
+  RewardButton = class(TSpeedButton)
+  public
+    rewardtype: integer;
+    constructor create(AOwner: Tcomponent); override;
+    destructor destroy; override;
+    procedure move;
+  end;
+
+  // 板子
+  BoardButton = class(TSpeedButton)
+  public
+    boardSpeed: integer;
+    canControl: boolean;
+    bms: BoardMoveStatus;
+    procedure moveBoard;
     constructor create(AOwner: Tcomponent); override;
     destructor destroy; override;
   end;
@@ -32,17 +59,9 @@ type
     destructor destroy; override;
   end;
 
-  // 挡板运动状态
-  BoardMoveStatus = (up, down, stop);
-  // 游戏状态
-  GameStatus = (init, inGame, pause, dead, load, win, dbError, allOver,
-    unkonwn);
-
   TMainForm = class(TForm)
     // 游戏面板
     gamePanel: TPanel;
-    // 挡板
-    board: TButton;
     // 跳帧控制时计
     frameControl: TTimer;
     // 状态
@@ -62,11 +81,10 @@ type
     Button1: TButton;
     SpeedButton1: TSpeedButton;
     ButtonBackground: TImage;
+    SkinData1: TSkinData;
     // 鼠标事件：游戏面板中移动（控制挡板移动状态）
     procedure gamePanelMouseMove(Sender: TObject; Shift: TShiftState;
       X, Y: integer);
-    // 挡板移动
-    procedure moveBoard;
     // 初始化
     procedure initGame;
     // 球体移动
@@ -103,6 +121,8 @@ type
     function checkWin: boolean;
     procedure Button1Click(Sender: TObject);
     procedure rePaintBricks;
+    procedure updateBoardMoveStatus;
+
   private
     { Private declarations }
   public
@@ -111,16 +131,14 @@ type
 
 var
   MainForm: TMainForm;
-  // 面板移动状态
-  bms: BoardMoveStatus = BoardMoveStatus.stop;
   // 当前游戏状态
   gs: GameStatus = GameStatus.init;
   // 上一个游戏状态
   lastStatus: GameStatus = GameStatus.unkonwn;
   // 面板可以控制flag
   canControl: boolean = false;
-  // 面板速度
-  boardSpeed: integer = 4;
+  // 板子
+  board: BoardButton;
   // 球
   ball: ballButton;
   // 分数
@@ -137,10 +155,29 @@ var
   brickLeft: integer;
   // 球数量
   ballCount: integer;
+  // 奖品数量
+  rewardCount: integer;
+  curMousePos: TPoint;
 
 implementation
 
 {$R *.dfm}
+
+procedure TMainForm.updateBoardMoveStatus;
+begin
+  if board = nil then
+    exit;
+  if curMousePos.Y > board.Top + board.height then
+    board.bms := BoardMoveStatus.down
+  else if curMousePos.Y < board.Top then
+    board.bms := BoardMoveStatus.up
+  else
+    board.bms := BoardMoveStatus.stop
+end;
+
+procedure RewardButton.move;
+begin ;
+end;
 
 procedure BrickButton.contacted;
 begin
@@ -225,6 +262,32 @@ begin
   inherited destroy;
 end;
 
+constructor BoardButton.create(AOwner: Tcomponent);
+begin
+  inherited create(AOwner);
+  self.width := 10;
+  self.height := 60;
+  self.Caption := '';
+end;
+
+destructor BoardButton.destroy;
+begin
+  inherited destroy;
+end;
+
+constructor RewardButton.create(AOwner: Tcomponent);
+begin
+  inherited create(AOwner);
+  self.Transparent := true;
+  brickgame.rewardCount := brickgame.rewardCount + 1;
+end;
+
+destructor RewardButton.destroy;
+begin
+  brickgame.rewardCount := brickgame.rewardCount - 1;
+  inherited destroy;
+end;
+
 constructor ballButton.create(AOwner: Tcomponent);
 begin
   inherited create(AOwner);
@@ -246,16 +309,13 @@ begin
   tempTop := Top + ballSpeedy;
   tempLeft := Left + ballSpeedx;
   checkContact(tempLeft, tempTop);
-  if tempLeft < brickgame.MainForm.board.Left +
-    brickgame.MainForm.board.width then
-    if brickgame.MainForm.board.Top < tempTop + height then
-      if brickgame.MainForm.board.Top > tempTop -
-        brickgame.MainForm.board.height then
+  if tempLeft < board.Left + board.width then
+    if board.Top < tempTop + height then
+      if board.Top > tempTop - board.height then
       begin
-        tempLeft := brickgame.MainForm.board.Left +
-          brickgame.MainForm.board.width;
+        tempLeft := board.Left + board.width;
         ballSpeedx := -ballSpeedx;
-        case bms of
+        case board.bms of
           BoardMoveStatus.up:
             ballSpeedy := ballSpeedy - 1;
           BoardMoveStatus.down:
@@ -528,7 +588,7 @@ begin
   begin
     if dialogForm = nil then
       dialogForm := TdialogForm.create(self);
-    dialogForm.DialogText.caption := '数据读取错误，数据文件缺失';
+    dialogForm.DialogText.Caption := '数据读取错误，数据文件缺失';
     gs := GameStatus.dbError;
     dialogForm.show;
   end;
@@ -545,7 +605,7 @@ begin
   begin
     if nextStatus = GameStatus.dead then
     begin
-      statusText.caption := '游戏结束';
+      statusText.Caption := '游戏结束';
       if inputNameDialog = nil then
         inputNameDialog := TInputNameDialog.create(self);
       inputNameDialog.show;
@@ -553,7 +613,7 @@ begin
     end
     else if nextStatus = GameStatus.win then
     begin
-      statusText.caption := '胜利';
+      statusText.Caption := '胜利';
       if winforma = nil then
         winforma := TwinFormA.create(self);
       gs := GameStatus.win;
@@ -565,12 +625,12 @@ begin
   begin
     if nextStatus = GameStatus.inGame then
     begin
-      statusText.caption := '游戏中';
+      statusText.Caption := '游戏中';
       gs := GameStatus.inGame;
     end
     else if nextStatus = GameStatus.load then
     begin
-      statusText.caption := '载入中';
+      statusText.Caption := '载入中';
       gs := GameStatus.load;
     end;
   end;
@@ -579,12 +639,12 @@ begin
   begin
     if nextStatus = GameStatus.inGame then
     begin
-      statusText.caption := '游戏中';
+      statusText.Caption := '游戏中';
       gs := GameStatus.inGame;
     end
     else if nextStatus = allOver then
     begin
-      statusText.caption := '你完成了所有关卡！';
+      statusText.Caption := '你完成了所有关卡！';
       if winforma = nil then
       begin
         winforma := TwinFormA.create(self);
@@ -598,26 +658,26 @@ begin
   if curStatus = GameStatus.dead then
     if nextStatus = GameStatus.init then
     begin
-      statusText.caption := '游戏中';
+      statusText.Caption := '游戏中';
       gs := GameStatus.init;
     end;
   if curStatus = GameStatus.inGame then
     if nextStatus = GameStatus.pause then
     begin
-      statusText.caption := '暂停';
+      statusText.Caption := '暂停';
       gs := GameStatus.pause;
     end;
   if curStatus = GameStatus.pause then
     if nextStatus = GameStatus.inGame then
     begin
-      statusText.caption := '游戏中';
+      statusText.Caption := '游戏中';
       gs := GameStatus.inGame;
     end;
   if curStatus = GameStatus.allOver then
     if nextStatus = GameStatus.init then
     begin
       stageCount := 1;
-      statusText.caption := '初始化';
+      statusText.Caption := '初始化';
       gs := GameStatus.init;
     end;
   lastStatus := curStatus;
@@ -633,38 +693,48 @@ procedure TMainForm.initGame;
 var
   i: integer;
 begin
-  statusText.caption := '初始化';
-  boardSpeed := 4;
-  score := 0;
-  ballCount := 0;
-  brickLeft := 0;
-  board.Top := gamePanel.height div 2 - board.height div 2;
+  statusText.Caption := '初始化';
+  // 从过关过来的话要继承分数
+  if lastStatus <> GameStatus.win then
+    score := 0;
+
   stageName := intToStr(stageCount);
   for i := ComponentCount - 1 downto 0 do
   begin
-    if (Components[i] is BrickButton) or (Components[i] is ballButton) then
+    if (Components[i] is BrickButton) or (Components[i] is ballButton) or
+      (Components[i] is BoardButton) then
       Components[i].free;
   end;
+  board := BoardButton.create(self);
   ball := ballButton.create(self);
   ball.parent := gamePanel;
   ball.Top := 50;
   ball.Left := 300;
   ball.ballSpeedx := 5;
   ball.ballSpeedy := 1;
+  board.parent := gamePanel;
+  board.Left := 1;
+  board.boardSpeed := 5;
+  board.canControl := true;
+  board.bms := BoardMoveStatus.stop;
+  board.Top := gamePanel.height div 2 - board.height div 2;
   switchStatus(gs, GameStatus.load);
 end;
 
-procedure TMainForm.moveBoard;
+procedure BoardButton.moveBoard;
 begin
+
+  if board = nil then
+    exit;
   if not canControl then
     exit;
   case bms of
     BoardMoveStatus.up:
-      if board.Top > 0 then
-        board.Top := board.Top - boardSpeed;
+      if Top > 0 then
+        Top := Top - boardSpeed;
     BoardMoveStatus.down:
-      if board.Top + board.height < gamePanel.height then
-        board.Top := board.Top + boardSpeed;
+      if Top + height < parent.height then
+        Top := Top + boardSpeed;
     BoardMoveStatus.stop:
       ;
   end;
@@ -681,9 +751,9 @@ end;
 
 procedure TMainForm.drawScore;
 begin
-  scoreLabel.caption := 'score:' + intToStr(score);
-  brickleftlabel.caption := '剩余砖块：' + intToStr(brickLeft);
-  Stage.caption := '第' + stageName + '关';
+  scoreLabel.Caption := 'score:' + intToStr(score);
+  brickleftlabel.Caption := '剩余砖块：' + intToStr(brickLeft);
+  Stage.Caption := '第' + stageName + '关';
 end;
 
 procedure TMainForm.statusTextClick(Sender: TObject);
@@ -713,7 +783,8 @@ begin
     GameStatus.inGame:
       begin
         rePaintBricks;
-        moveBoard;
+        updateBoardMoveStatus;
+        board.moveBoard;
         ballsmove;
         drawScore;
         checkWin;
@@ -745,14 +816,8 @@ end;
 procedure TMainForm.gamePanelMouseMove(Sender: TObject; Shift: TShiftState;
   X, Y: integer);
 begin
-
-  if Y > board.Top + board.height then
-    bms := BoardMoveStatus.down
-  else if Y < board.Top then
-    bms := BoardMoveStatus.up
-  else
-    bms := BoardMoveStatus.stop
-
+  curMousePos.X := X;
+  curMousePos.Y := Y;
 end;
 
 end.
