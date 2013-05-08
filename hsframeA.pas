@@ -53,9 +53,11 @@ begin
       highscoreText.text := 'playerName' + chr(9) + 'score';
       for i := 0 to icount - 1 do
       begin
-        highscoreText.text := highscoreText.text + chr(13) + chr(10) + chr(9)
-          + sQry.FieldByName('playerName').AsString + chr(9) + sQry.FieldByName
-          ('score').AsString;
+        with highscoreText.Lines do
+        begin
+          add(inttostr(i+1)+':' + chr(9) + sQry.FieldByName('playerName').AsString + chr(9) + chr
+              (9) + sQry.FieldByName('score').AsString);
+        end;
         sQry.Next;
       end;
     finally
